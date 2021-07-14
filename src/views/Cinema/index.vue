@@ -7,15 +7,14 @@
 					全城 <i class="iconfont icon-lower-triangle"></i>
 				</div>
 				<div class="brand_swtich">
-					品牌 <i class="iconfont icon-lower-triangle"></i>
+					APP 订票 <i class="iconfont icon-lower-triangle"></i>
 				</div>
 				<div class="feature_switch">
-					特色 <i class="iconfont icon-lower-triangle"></i>
+					资讯
 				</div>
 			</div>
       <CinemaList />
 		</div>
-    cinema
     <TabBar />
   </div>
 </template>
