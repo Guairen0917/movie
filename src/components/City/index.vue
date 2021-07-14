@@ -4,88 +4,135 @@
       <div class="city_hot">
         <h2>热门城市</h2>
         <ul class="clearfix">
-          <li>上海</li>
-          <li>北京</li>
-          <li>上海</li>
-          <li>北京</li>
-          <li>上海</li>
-          <li>北京</li>
-          <li>上海</li>
-          <li>北京</li>
+          <li v-for="item in hotList" :key="item.id">{{item.name}}</li>
         </ul>
       </div>
-      <div class="city_sort">
-        <div>
-          <h2>A</h2>
+      <div class="city_sort" ref="city_sort">
+        <div v-for="item in cityList" :key="item.index">
+          <h2>{{item.index}}</h2>
           <ul>
-            <li>阿拉善盟</li>
-            <li>鞍山</li>
-            <li>安庆</li>
-            <li>安阳</li>
-          </ul>
-        </div>
-        <div>
-          <h2>B</h2>
-          <ul>
-            <li>北京</li>
-            <li>保定</li>
-            <li>蚌埠</li>
-            <li>包头</li>
-          </ul>
-        </div>
-        <div>
-          <h2>A</h2>
-          <ul>
-            <li>阿拉善盟</li>
-            <li>鞍山</li>
-            <li>安庆</li>
-            <li>安阳</li>
-          </ul>
-        </div>
-        <div>
-          <h2>B</h2>
-          <ul>
-            <li>北京</li>
-            <li>保定</li>
-            <li>蚌埠</li>
-            <li>包头</li>
-          </ul>
-        </div>
-        <div>
-          <h2>A</h2>
-          <ul>
-            <li>阿拉善盟</li>
-            <li>鞍山</li>
-            <li>安庆</li>
-            <li>安阳</li>
-          </ul>
-        </div>
-        <div>
-          <h2>B</h2>
-          <ul>
-            <li>北京</li>
-            <li>保定</li>
-            <li>蚌埠</li>
-            <li>包头</li>
+            <li v-for="itemList in item.list" :key="itemList.id">{{itemList.name}}</li>
           </ul>
         </div>	
       </div>
-    </div>
+    </div> 
     <div class="city_index">
       <ul>
-        <li>A</li>
-        <li>B</li>
-        <li>C</li>
-        <li>D</li>
-        <li>E</li>
+        <li v-for="(item, index) in cityList" :key="item.index" @touchstart="handleToIndex(index)">{{item.index}}</li>
       </ul>
-    </div>
+    </div> 
   </div>
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
-  name: 'City'
+  name: 'City',
+  data() {
+    return {
+      cityList: [],
+      hotList: []
+    }
+  },
+  mounted() {
+    axios({
+      url: 'https://m.maizuo.com/gateway?k=3714562',
+      headers: {
+        'X-Client-Info': '{"a":"3000","ch":"1002","v":"5.0.4","e":"16257571244384470119481345"}',
+        'X-Host': 'mall.film-ticket.city.list'
+      }
+    }).then(res => {
+      // console.log(res.data.data.cities)
+      var msg = res.data.msg
+      if (msg === 'ok') {
+        var cities = res.data.data.cities
+        var { cityList, hotList } = this.formatCityList(cities)
+        this.cityList = cityList
+        this.hotList = hotList
+      }
+    })
+  },
+  methods: {
+    // 城市列表格式处理
+    formatCityList(cities) {
+      var cityList = []
+      var hotList = []
+
+      for (var i = 0;i < cities.length; i++) {
+        var Hot = cities[i].isHot
+        // 截取首字母对比
+        var firstLetter = cities[i].pinyin.substring(0, 1).toUpperCase()
+        if (Hot === 1) {
+          hotList.push(cities[i])
+        }
+        if (toCom(firstLetter)){ // 新索引index
+          cityList.push({ index: firstLetter, list: [{ name: cities[i].name, id: cities[i].cityId }]})
+        } else { // 累加到已有索引
+          for (var j = 0; j < cityList.length; j++) {
+            if (cityList[j].index === firstLetter){
+              cityList[j].list.push({ name: cities[i].name, id: cities[i].cityId })
+            }
+          }
+        }
+      }
+
+      cityList.sort((n1,n2) => {
+        if (n1.index > n2.index) {
+          return 1
+        } else if (n1.index < n2.index) {
+          return -1
+        } else {
+          return 0
+        }
+      })
+
+      function toCom(firstLetter) {
+        for (var i = 0; i < cityList.length; i++) {
+          if (cityList[i].index === firstLetter) {
+            return false
+          }
+        }
+        return true
+      }
+      // console.log(hotList)
+      // console.log(cities)
+      // console.log(cityList)
+      return {
+        cityList,
+        hotList
+      }
+    },
+    // 写法二
+    // handleCity(datalist) {
+    //   // console.log(datalist)
+    //   // 1 遍历生成 26 个字母的数组
+    //   var letterArr = []
+    //   for (var i = 65; i < 91; i++) {
+    //     letterArr.push(String.fromCharCode(i))
+    //   }
+    //   // console.log(letterArr)
+    //   // 2 截取 pinyin 字段首字母与数组匹配
+    //   var newlist = []
+    //   for (var j = 0; j < letterArr.length; j++) {
+    //     var arr = datalist.filter(item => item.pinyin.substring(0, 1) === letterArr[j].toLocaleLowerCase())
+    //     // console.log(arr)
+    //     // 过滤空数组 将数据存进新数组
+    //     if (arr.length > 0) {
+    //       newlist.push({
+    //         index: letterArr[j],
+    //         list: arr
+    //       })
+    //     }
+    //   }
+    //   // console.log(newlist)
+    //   return newlist
+    // }
+    handleToIndex(index) {
+      var h2 = this.$refs.city_sort.getElementsByTagName('h2')
+      this.$refs.city_sort.parentNode.scrollTop = h2[index].offsetTop
+    }
+  }
 }
 </script>
 
@@ -95,7 +142,7 @@ export default {
 .city_body .city_list::-webkit-scrollbar{ background-color:transparent; width:0; }
 .city_body .city_hot{ margin-top: 20px;}
 .city_body .city_hot h2{ padding-left: 15px; line-height: 30px; font-size: 14px; background:#F0F0F0; font-weight: normal;}
-.city_body .city_hot ul li{ float: left; background: #fff; width: 29%; height: 33px; margin-top: 15px; margin-left: 3%; padding: 0 4px; border: 1px solid #e6e6e6; border-radius: 3px; line-height: 33px; text-align: center; box-sizing: border-box;}
+.city_body .city_hot ul li{ float: left; background: #F0F0F0; width: 29%; height: 33px; margin-top: 15px; margin-left: 3%; padding: 0 4px; border: 1px solid #e6e6e6; border-radius: 6px; line-height: 33px; text-align: center; box-sizing: border-box;}
 .city_body .city_sort div{ margin-top: 20px;}
 .city_body .city_sort h2{ padding-left: 15px; line-height: 30px; font-size: 14px; background:#F0F0F0; font-weight: normal;}
 .city_body .city_sort ul{ padding-left: 10px; margin-top: 10px;}
