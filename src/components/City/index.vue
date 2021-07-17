@@ -1,17 +1,18 @@
 <template>
   <div class="city_body">
-    <div class="city_list">
+    <Loading v-if="isLoading" />
+    <div v-else class="city_list">
       <div class="city_hot">
         <h2>热门城市</h2>
         <ul class="clearfix">
-          <li v-for="item in hotList" :key="item.id">{{item.name}}</li>
+          <li v-for="item in hotList" :key="item.cityId" @click="handleToCity(item.name, item.cityId)">{{item.name}}</li>
         </ul>
       </div>
       <div class="city_sort" ref="city_sort">
         <div v-for="item in cityList" :key="item.index">
           <h2>{{item.index}}</h2>
           <ul>
-            <li v-for="itemList in item.list" :key="itemList.id">{{itemList.name}}</li>
+            <li v-for="itemList in item.list" :key="itemList.id" @click="handleToCity(itemList.name, itemList.id)">{{itemList.name}}</li>
           </ul>
         </div>	
       </div>
@@ -31,27 +32,48 @@ export default {
   name: 'City',
   data() {
     return {
+      // ct: 1,
       cityList: [],
-      hotList: []
+      hotList: [],
+      isLoading: true
+      
     }
   },
   mounted() {
-    axios({
-      url: 'https://m.maizuo.com/gateway?k=3714562',
-      headers: {
-        'X-Client-Info': '{"a":"3000","ch":"1002","v":"5.0.4","e":"16257571244384470119481345"}',
-        'X-Host': 'mall.film-ticket.city.list'
-      }
-    }).then(res => {
-      // console.log(res.data.data.cities)
-      var msg = res.data.msg
-      if (msg === 'ok') {
-        var cities = res.data.data.cities
-        var { cityList, hotList } = this.formatCityList(cities)
-        this.cityList = cityList
-        this.hotList = hotList
-      }
-    })
+    var cityList = window.localStorage.getItem('cityList')
+    var hotList = window.localStorage.getItem('hotList')
+
+    if (cityList && hotList) {
+      this.cityList = JSON.parse(cityList)
+      this.hotList = JSON.parse(hotList)
+      this.isLoading = false
+    } else {
+      axios({
+        url: 'https://m.maizuo.com/gateway?k=3714562',
+        headers: {
+          'X-Client-Info': '{"a":"3000","ch":"1002","v":"5.0.4","e":"16257571244384470119481345"}',
+          'X-Host': 'mall.film-ticket.city.list'
+        }
+      }).then(res => {
+        console.log(res.data.data.cities)
+        var msg = res.data.msg
+        if (msg === 'ok') {
+          this.isLoading = false
+          
+          var cities = res.data.data.cities
+          var { cityList, hotList } = this.formatCityList(cities)
+          this.cityList = cityList
+          this.hotList = hotList
+
+          // 存储到本地Local storage 存储的是字符串 要转换
+          window.localStorage.setItem('cityList', JSON.stringify(cityList))
+          window.localStorage.setItem('hotList', JSON.stringify(hotList))
+
+        }
+      })
+    }
+
+    
   },
   methods: {
     // 城市列表格式处理
@@ -128,6 +150,18 @@ export default {
     //   // console.log(newlist)
     //   return newlist
     // }
+    handleToCity(name, id) {
+      this.$store.commit('city/CITY_INFO', {name, id})
+      window.localStorage.setItem('nowname', name)
+      window.localStorage.setItem('nowid', id)
+      this.$router.push('/movie/nowplaying')
+      // this.$router.push({
+      //   name: 'nowplaying',
+      //   params: {
+      //     ct: 1
+      //   }
+      // })
+    },
     handleToIndex(index) {
       var h2 = this.$refs.city_sort.getElementsByTagName('h2')
       this.$refs.city_sort.parentNode.scrollTop = h2[index].offsetTop

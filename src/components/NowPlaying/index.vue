@@ -1,11 +1,12 @@
 <template>
   <div class="movie_body">
-    <ul>
+    <Loading v-if="isLoading" />
+    <ul v-else v-infinite-scroll="loadMore" infinite-scroll-disabled="loading" infinite-scroll-distance="10" infinite-scroll-immediate-check="false">
       <li v-for="data in movieList" :key="data.filmId">
-        <div class="pic_show"><img :src="data.poster"></div>
-        <div class="info_list">
+        <div class="pic_show" @click="handleChangePage(data.filmId)"><img :src="data.poster"></div>
+        <div class="info_list" @click="handleChangePage(data.filmId)">
           <h2>{{data.name}} <img v-if="data.filmType.name === '3D'" src="@/assets/maxs.png"></h2>
-          <p>评分： <span class="grade" v-if="data.grade">{{data.grade}}</span><span v-else>暂无评分</span></p>
+          <p>评分：<span class="grade" v-if="data.grade">{{data.grade}}</span><span v-else>暂无评分</span></p>
           <p v-if="data.actors">主演：{{data.actors | actorfilter}}</p>
           <p v-else>暂无主演</p>
           <p>简介：{{data.synopsis}}</p>
@@ -15,12 +16,15 @@
         </div>
       </li>
     </ul>
+    <div v-show="isShow" class="load_active">正在加载中...</div>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import Vue from 'vue'
+
+// import BetterScroll from 'better-scroll'
 
 // 后端传过来的数据不是自己想要，自己设置过滤条件返回想要的
 Vue.filter('actorfilter', function(data) {
@@ -33,22 +37,69 @@ export default {
   name: 'NowPlaying',
   data() {
     return {
-      movieList: []
+      movieList: [],
+      loading: false,
+      current: 1,
+      total: 0,
+      isShow: true,
+      isLoading: true,
+      prevCtiyId: -1
     }
   },
   mounted() {
+    var cityId = this.$store.state.city.id
+    if (this.prevCtiyId === cityId) { return }
+    // this.isLoading = true
+
     axios({
-      url: 'https://m.maizuo.com/gateway?cityId=440100&pageNum=1&pageSize=10&type=1&k=2070027',
+      url: `https://m.maizuo.com/gateway?cityId=${cityId}&pageNum=1&pageSize=10&type=1&k=2070027`,
       headers: {
         'X-Client-Info': '{"a":"3000","ch":"1002","v":"5.0.4","e":"15610855429195524981146","bc":"210300"}',
         'X-Host': 'mall.film-ticket.film.list'
       }
     }).then(res => {
+      this.isLoading = false
+      // 把当前城市id保存到状态管理
+      this.prevCtiyId = cityId
       // console.log(res.data.data.films)
       this.movieList = res.data.data.films
-      // // 记录返回数据总长度 方便后面无限滚动停止加载
-      // this.total = res.data.data.total
+      // 记录返回数据总长度 方便后面无限滚动停止加载
+      this.total = res.data.data.total
     })
+  },
+  methods: {
+    handleChangePage(id) {
+      // console.log(id)
+      // 编程式导航 路径跳转
+      // this.$router.push(`/detail/${id}`)
+
+      // 编程式导航 名字跳转
+      this.$router.push({ name: 'moviedetail', params: { id: id } })
+    },
+    loadMore() {
+      // console.log('没有更多啦')
+
+      this.loading = true
+      
+      this.current++
+      if (this.movieList.length === this.total) {
+        this.isShow = false
+
+        return
+      }
+      
+      axios({
+        url: `https://m.maizuo.com/gateway?cityId=${this.prevCtiyId}&pageNum=${this.current}&pageSize=10&type=1&k=2070027`,
+        headers: {
+          'X-Client-Info': '{"a":"3000","ch":"1002","v":"5.0.4","e":"15610855429195524981146","bc":"210300"}',
+          'X-Host': 'mall.film-ticket.film.list'
+        }
+      }).then(res => {
+        // datalist 应该是拼接上下面请求回来的数据
+        this.movieList = [...this.movieList, ...res.data.data.films]
+        this.loading = false // 启用无限滚动
+      })
+    }
   }
 }
 </script>
@@ -66,4 +117,5 @@ export default {
 .movie_body .info_list img{ width:50px; position: absolute; right:10px; top: 5px;}
 .movie_body .btn_mall , .movie_body .btn_pre{ width:47px; height:27px; line-height: 28px; text-align: center; background-color: #f03d37; color: #fff; border-radius: 4px; font-size: 12px; cursor: pointer;}
 .movie_body .btn_pre{ background-color: #3c9fe6;}
+.movie_body .load_active{ width: 100%; height: 24px; line-height: 24px; text-align: center;}
 </style>
