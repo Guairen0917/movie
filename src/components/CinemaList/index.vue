@@ -1,6 +1,7 @@
 <template>
-  <div id="content">
+  <!-- <div id="content"> -->
     <div class="cinema_body">
+      <Loading v-if="isLoading" />
       <ul>
         <li v-for="data in cinemaList" :key="data.index">
           <div>
@@ -18,7 +19,7 @@
         </li>
       </ul>
     </div>
-  </div>
+  <!-- </div> -->
 </template>
 
 <script>
@@ -34,17 +35,21 @@ export default {
   name: 'CinemaList',
   data() {
     return {
-      cinemaList: []
+      cinemaList: [],
+      isLoading: true,
+      prevCtiyId: -1
     }
   },
   mounted() {
     axios({
-      url: 'https://m.maizuo.com/gateway?cityId=440100&ticketFlag=1&k=9660977',
+      url: `https://m.maizuo.com/gateway?cityId=${this.$store.state.city.id}&ticketFlag=1&k=9660977`,
       headers: {
         'X-Client-Info': '{"a":"3000","ch":"1002","v":"5.0.4","e":"16257571244384470119481345"}',
         'X-Host': 'mall.film-ticket.cinema.list'
       }
     }).then(res => {
+      this.isLoading = false
+      
       // console.log(res.data.data.cinemas)
       this.cinemaList = res.data.data.cinemas
     })
