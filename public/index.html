@@ -7,6 +7,7 @@
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
     <link rel="stylesheet" href="<%= BASE_URL %>css/common.css">
     <link rel="stylesheet" href="<%= BASE_URL %>css/iconfont/iconfont.css">
+    <link rel="stylesheet" href="<%= BASE_URL %>iconfont/iconfont.css">
     <!-- <title><%= htmlWebpackPlugin.options.title %></title> -->
     <title>看电影</title>
   </head>
@@ -14,7 +15,21 @@
     <noscript>
       <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
-    <div id="app"></div>
+    <style>
+      #app{ display: flex; height:100%;flex-direction: column;}
+      #app div{ margin : auto; padding: auto;}
+    </style>
+    <div id="app">
+      <div>
+        <p>一般人看不到这个界面的哦~</p>
+        <i class="iconfont icon-wrong"></i>
+        <i class="iconfont icon-cry"></i>
+        <i class="iconfont icon-information"></i>
+        <i class="iconfont icon-smile"></i>
+        <i class="iconfont icon-success"></i>
+      </div>
+
+    </div>
     <!-- built files will be auto injected -->
   </body>
 </html>
